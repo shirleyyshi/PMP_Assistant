@@ -9,6 +9,7 @@ from random import sample
 
 User = get_user_model()
 
+
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
@@ -119,7 +120,15 @@ class QuestionRecordViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # 只返回当前登录用户的答题记录
+        # 1. Swagger 调用时跳过
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        # 2. 匿名用户也跳过
+        if not self.request.user.is_authenticated:
+            return self.queryset.none()
+
+        # 3. 已登录用户正常返回
         return self.queryset.filter(user=self.request.user)
 
 
@@ -129,5 +138,13 @@ class QuizRecordViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # 只返回当前登录用户的测验记录
+        # 1. Swagger 调用时跳过
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset.none()
+
+        # 2. 匿名用户也跳过
+        if not self.request.user.is_authenticated:
+            return self.queryset.none()
+
+        # 3. 已登录用户正常返回
         return self.queryset.filter(user=self.request.user)
